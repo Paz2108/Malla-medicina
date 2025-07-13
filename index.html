@@ -5,48 +5,99 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Malla Curricular Medicina UBO</title>
   <style>
+    /* Reset básico */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: Arial, sans-serif;
+      background: #f7f1f8;
+      color: #333;
       padding: 20px;
-      background: #f9f9f9;
     }
     h1 {
       text-align: center;
       margin-bottom: 30px;
+      font-size: 2em;
+      color: #4b235e;
+    }
+    /* Contenedor en columnas para pantallas grandes */
+    #malla {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(200px, 1fr);
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 10px;
     }
     .semester {
-      margin-bottom: 20px;
+      background: #fff;
+      border: 2px solid #e0c3fc;
+      border-radius: 12px;
+      padding: 15px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
     }
     .semester h2 {
-      margin-bottom: 10px;
-      color: #333;
+      margin-bottom: 12px;
+      color: #4b235e;
+      font-size: 1.2em;
+      text-align: center;
     }
     .courses {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
     .course {
-      padding: 12px;
+      padding: 10px;
       border-radius: 8px;
       cursor: pointer;
       text-align: center;
-      transition: transform .2s, box-shadow .2s;
-      color: #333;
+      transition: transform 0.2s, box-shadow 0.2s;
       user-select: none;
+      font-size: 0.95em;
+    }
+    .course:not(.locked) {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .course:not(.locked):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
     .course.locked {
-      opacity: 0.4;
+      opacity: 0.5;
       cursor: default;
-      color: #777;
     }
     .course.passed {
       text-decoration: line-through;
-      opacity: 0.6;
+      opacity: 0.7;
     }
-    .course:not(.locked):hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    /* Colores pastel rosas y morados por semestre */
+    .course:nth-child(1) { background: #f4c2c2; }
+    .course:nth-child(2) { background: #f8c8dc; }
+    .course:nth-child(3) { background: #fce1f0; }
+    .course:nth-child(4) { background: #edd1f7; }
+    .course:nth-child(5) { background: #e0b0ff; }
+    .course:nth-child(6) { background: #d1c4e9; }
+    .course:nth-child(7) { background: #ffd1dc; }
+    .course:nth-child(8) { background: #f5e6fa; }
+    .course:nth-child(9) { background: #e9c4f0; }
+    .course:nth-child(10) { background: #f7d1e0; }
+    .course:nth-child(11) { background: #e8c3fd; }
+    .course:nth-child(12) { background: #f1dafc; }
+    .course:nth-child(13) { background: #fbe7f0; }
+    .course:nth-child(14) { background: #e2b1e6; }
+
+    /* Adaptación a pantallas pequeñas */
+    @media (max-width: 768px) {
+      #malla {
+        grid-auto-flow: row;
+        grid-auto-rows: min-content;
+        overflow-x: hidden;
+      }
+      .semester {
+        margin-bottom: 20px;
+      }
     }
   </style>
 </head>
@@ -55,15 +106,7 @@
   <div id="malla"></div>
 
   <script>
-    // Paleta de colores pastel por semestre
-    const palette = [
-      '#AEDFF7', '#FBE7C6', '#D4F4DD', '#F7C6D6',
-      '#FFF2AE', '#C7CEEA', '#FFDAC1', '#E2F0CB',
-      '#FFB3BA', '#B28DFF', '#C3FDB8', '#D9D0EC',
-      '#FFC9DE', '#C2E7DA'
-    ];
-
-    // Definición de la malla y prerequisitos por curso
+    // Paleta de prerrequisitos y semestres (misma definición que antes)
     const malla = [
       { semestre: 1, cursos: [
         { name: 'Bases Químicas de la Medicina', prereqs: [] },
@@ -165,40 +208,34 @@
       localStorage.setItem('mallaEstado', JSON.stringify(estado));
     }
 
-    // Verifica si un curso está desbloqueado
+    // Comprueba prerequisitos
     function canAccess(course) {
       return course.prereqs.every(pr => estado[pr]);
     }
 
-    // Renderiza la malla completa
+    // Renderiza la malla
     function render() {
       const container = document.getElementById('malla');
       container.innerHTML = '';
-
       malla.forEach((sem, idx) => {
         const semDiv = document.createElement('div');
-        semDiv.classList.add('semester');
-        semDiv.innerHTML = `<h2>Semestre ${sem.semestre}</h2>`;
+        semDiv.className = 'semester';
+        semDiv.innerHTML = `<h2>Sem ${sem.semestre}</h2>`;
 
         const coursesDiv = document.createElement('div');
-        coursesDiv.classList.add('courses');
+        coursesDiv.className = 'courses';
 
         sem.cursos.forEach(course => {
           const cDiv = document.createElement('div');
           cDiv.textContent = course.name;
-          cDiv.classList.add('course');
-          cDiv.style.backgroundColor = palette[idx % palette.length];
+          cDiv.className = 'course';
 
           if (estado[course.name]) cDiv.classList.add('passed');
-          if (!canAccess(course)) {
-            cDiv.classList.add('locked');
-          } else {
-            cDiv.addEventListener('click', () => {
-              estado[course.name] = !estado[course.name];
-              saveEstado();
-              render();
-            });
-          }
+          if (!canAccess(course)) cDiv.classList.add('locked');
+          else cDiv.addEventListener('click', () => {
+            estado[course.name] = !estado[course.name];
+            saveEstado(); render();
+          });
 
           coursesDiv.appendChild(cDiv);
         });
@@ -208,7 +245,7 @@
       });
     }
 
-    // Inicializa render
+    // Inicia
     render();
   </script>
 </body>
